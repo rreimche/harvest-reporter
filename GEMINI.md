@@ -1,6 +1,15 @@
 # Harvest Reporter
 
-This script prepares reports for services for my clients every month. It uses the harvest REST API to get data and prepare reports. The reports are generated in German.
+This script prepares monthly or date-range based service reports for clients using time tracking data from the Harvest API. The reports are generated as Excel files in German.
+
+## Features
+
+- Generates Excel reports with time entries.
+- Report columns: "Datum", "Leistung", "Arbeitsstunden".
+- Calculates the total hours using an Excel formula.
+- Report sheet is named "Remote".
+- Filename pattern: `Leistungsuuebersicht [client name] [month] [year].xlsx` or `Leistungsuuebersicht [client name] [from_date]_to_[to_date].xlsx`.
+- Can be run for the previous month or for a specific date range using command-line arguments.
 
 ## File Structure
 
@@ -36,10 +45,18 @@ This script prepares reports for services for my clients every month. It uses th
 
 ## Usage
 
-Run the script from your terminal:
+### Generating a report for the previous month
+
+Run the script without any arguments:
 
 ```bash
 /Users/rreimche/dev/harvest-reporter/venv/bin/python /Users/rreimche/dev/harvest-reporter/reporter.py
 ```
 
-The script will generate an Excel report for each client for the previous month.
+### Generating a report for a specific date range
+
+You can use the optional `--from_date` and `--to_date` arguments to generate a report for a specific period. The date format is `YYYY-MM-DD`.
+
+```bash
+/Users/rreimche/dev/harvest-reporter/venv/bin/python /Users/rreimche/dev/harvest-reporter/reporter.py --from_date 2025-07-01 --to_date 2025-07-31
+```

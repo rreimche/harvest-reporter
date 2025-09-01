@@ -1,3 +1,4 @@
+import argparse
 import configparser
 import datetime
 import requests
@@ -57,7 +58,7 @@ def get_time_entries(config, client_id, from_date, to_date):
     response.raise_for_status()  # Raise an exception for bad status codes
     return response.json()['time_entries']
 
-def create_report(client_name, time_entries, from_date):
+def create_report(client_name, time_entries, from_date, to_date=None):
     """Creates an Excel report for a client."""
     wb = Workbook()
     ws = wb.active
@@ -82,14 +83,21 @@ def create_report(client_name, time_entries, from_date):
     ws.cell(row=summary_row, column=2, value=f"=SUM(C2:C{row_num-1})")
 
     # Save the workbook
-    month_str = from_date.strftime('%B')
-    year_str = from_date.strftime('%Y')
-    report_filename = f"Leistungsuebersicht {client_name} {month_str} {year_str}.xlsx"
+    if to_date:
+        date_str = f"{from_date.strftime('%Y-%m-%d')}_to_{to_date.strftime('%Y-%m-%d')}"
+    else:
+        date_str = from_date.strftime('%B_%Y')
+    report_filename = f"Leistungsuebersicht {client_name} {date_str}.xlsx"
     wb.save(report_filename)
     print(f"Report saved to {report_filename}")
 
 def main():
     """Main function to generate reports."""
+    parser = argparse.ArgumentParser(description="Generate Harvest time reports.")
+    parser.add_argument("--from_date", help="Start date for the report in YYYY-MM-DD format.")
+    parser.add_argument("--to_date", help="End date for the report in YYYY-MM-DD format.")
+    args = parser.parse_args()
+
     config = get_config()
     client_ids = get_client_ids(config)
 
@@ -97,8 +105,13 @@ def main():
         print("No client IDs found in config.ini. Exiting.")
         return
 
-    from_date, to_date = get_previous_month_dates()
-    print(f"Generating reports for {from_date.strftime('%B %Y')}...")
+    if args.from_date and args.to_date:
+        from_date = datetime.datetime.strptime(args.from_date, "%Y-%m-%d").date()
+        to_date = datetime.datetime.strptime(args.to_date, "%Y-%m-%d").date()
+        print(f"Generating reports from {from_date} to {to_date}...")
+    else:
+        from_date, to_date = get_previous_month_dates()
+        print(f"Generating reports for {from_date.strftime('%B %Y')}...")
 
     for client_id in client_ids:
         try:
@@ -106,7 +119,10 @@ def main():
             print(f"Fetching time entries for client {client_name} ({client_id})...")
             time_entries = get_time_entries(config, client_id, from_date, to_date)
             if time_entries:
-                create_report(client_name, time_entries, from_date)
+                if args.from_date and args.to_date:
+                    create_report(client_name, time_entries, from_date, to_date)
+                else:
+                    create_report(client_name, time_entries, from_date)
             else:
                 print(f"No time entries found for client {client_name} for the specified period.")
         except requests.exceptions.RequestException as e:

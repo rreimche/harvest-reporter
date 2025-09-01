@@ -112,3 +112,7 @@ dmypy.json
 .pyre/
 
 config.ini
+
+# Excel files
+*.xlsx
+~$*.xlsx
