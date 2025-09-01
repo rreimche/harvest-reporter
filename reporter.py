@@ -1,4 +1,3 @@
-
 import configparser
 import datetime
 import requests
@@ -25,6 +24,20 @@ def get_previous_month_dates():
     first_day_of_previous_month = last_day_of_previous_month.replace(day=1)
     return first_day_of_previous_month, last_day_of_previous_month
 
+def get_client_name(config, client_id):
+    """Fetches the client name from the Harvest API."""
+    token = config.get('harvest', 'token')
+    account_id = config.get('harvest', 'account_id')
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Harvest-Account-ID": account_id,
+        "User-Agent": "Python Harvest Reporter"
+    }
+    url = f"https://api.harvestapp.com/v2/clients/{client_id}"
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    return response.json()['name']
+
 def get_time_entries(config, client_id, from_date, to_date):
     """Fetches time entries for a client from the Harvest API."""
     token = config.get('harvest', 'token')
@@ -44,11 +57,11 @@ def get_time_entries(config, client_id, from_date, to_date):
     response.raise_for_status()  # Raise an exception for bad status codes
     return response.json()['time_entries']
 
-def create_report(client_id, time_entries, from_date):
+def create_report(client_name, time_entries, from_date):
     """Creates an Excel report for a client."""
     wb = Workbook()
     ws = wb.active
-    ws.title = "Time Report"
+    ws.title = "Remote"
 
     # Write header
     ws.append(["Datum", "Leistung", "Arbeitsstunden"])
@@ -65,11 +78,13 @@ def create_report(client_id, time_entries, from_date):
     # Write summary
     ws.append([])
     summary_row = row_num + 1
-    ws.cell(row=summary_row, column=1, value="SUMME Arbeitsstunden")
+    ws.cell(row=summary_row, column=1, value="SUMME")
     ws.cell(row=summary_row, column=2, value=f"=SUM(C2:C{row_num-1})")
 
     # Save the workbook
-    report_filename = f"report_{client_id}_{from_date.strftime('%Y_%m')}.xlsx"
+    month_str = from_date.strftime('%B')
+    year_str = from_date.strftime('%Y')
+    report_filename = f"Leistungsuebersicht {client_name} {month_str} {year_str}.xlsx"
     wb.save(report_filename)
     print(f"Report saved to {report_filename}")
 
@@ -87,12 +102,13 @@ def main():
 
     for client_id in client_ids:
         try:
-            print(f"Fetching time entries for client {client_id}...")
+            client_name = get_client_name(config, client_id)
+            print(f"Fetching time entries for client {client_name} ({client_id})...")
             time_entries = get_time_entries(config, client_id, from_date, to_date)
             if time_entries:
-                create_report(client_id, time_entries, from_date)
+                create_report(client_name, time_entries, from_date)
             else:
-                print(f"No time entries found for client {client_id} for the specified period.")
+                print(f"No time entries found for client {client_name} for the specified period.")
         except requests.exceptions.RequestException as e:
             print(f"Error fetching data for client {client_id}: {e}")
         except Exception as e:
