@@ -1,6 +1,6 @@
 # Harvest Reporter
 
-This script prepares monthly or date-range based service reports for clients using time tracking data from the Harvest API. The reports are generated as Excel files in German.
+This script prepares monthly or date-range based service reports for clients using time tracking data from the Harvest API. The reports are generated as Excel files in German. Most of the code and of the documentation is generated with Gemini using gemini-cli (I wanted to try the tool).
 
 ## Features
 
@@ -8,7 +8,7 @@ This script prepares monthly or date-range based service reports for clients usi
 - Report columns: "Datum", "Leistung", "Arbeitsstunden".
 - Calculates the total hours using an Excel formula.
 - Report sheet is named "Remote".
-- Filename pattern: `Leistungsuuebersicht [client name] [month] [year].xlsx` or `Leistungsuuebersicht [client name] [from_date]_to_[to_date].xlsx`.
+- Filename pattern: `Leistungsuebersicht [client name] [month] [year].xlsx` or `Leistungsuebersicht [client name] [from_date]_to_[to_date].xlsx`.
 - Can be run for the previous month or for a specific date range using command-line arguments.
 
 ## File Structure
